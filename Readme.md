@@ -1,10 +1,12 @@
 # Debrant 
 
-[Debian](https://debian.org)-based web development [Vagrant](http://vagrantup.com), built on top of [10up/varying-vagrant-vagrants](https://github.com/10up/varying-vagrant-vagrants).
+[Debian](https://debian.org)-based web development [Vagrant](http://vagrantup.com), heavily inspired ( = half forked ) from [10up/varying-vagrant-vagrants](https://github.com/10up/varying-vagrant-vagrants).
 
 Our custom Vagrant box is a 32 bit Debian Wheezy built via [grml-debootstrap](http://grml.org/grml-debootstrap/), with networking, VirtualBox additions and the basic tools. Everything else will be insalled via the custom provision bash scripts, which can be modified or replaced as needed.
 
 Download: [wheezy32.box](http://tools.swergroup.com/downloads/wheezy32.box) (188MB)
+
+It's a work in progress, please do not expect anything working.
 
 ## Features
 
@@ -21,16 +23,28 @@ Download: [wheezy32.box](http://tools.swergroup.com/downloads/wheezy32.box) (188
 * Vagrant
 * [Z shell (w/ GRML.org setup)](http://grml.org/zsh/)
 
+
 ## Mapped files/folders
 
 * `config/sources.list` -- it replaces the main `/etc/apt/sources.list` file
 * `config/custom-sources.list` -- optional `/etc/apt/sources.list.d/custom-sources.list` file
-* `provision/provision-pre.sh` -- optional pre-default provision script (runs before, every time)
-* `provision/provision-custom.sh` -- if present, replace the default provision script (and runs every time :-)
+* `provision/provision-pre.sh` -- optional pre-default provision hook script
+* `provision/provision-custom.sh` -- if present, replace the default provision script
 * `provision/provision.sh` -- default provision script (runs every time, unless custom is present)
-* `provision/provision-post.sh` -- optional post-default provision script (runs before, every time)
+* `provision/provision-post.sh` -- optional post-default provision hook script
 
 * `config` -- shared configuration folder
 * `database` -- database folders and scripts
 * `www` -- website folders
+
+## Known bugs
+
+* missing mysql: Percona server needs a new install routine
+
+
+## Changelog
+
+### 0.1.0 (23/Ott/2013)
+
+* Global setup
 
