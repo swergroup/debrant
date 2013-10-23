@@ -1,10 +1,22 @@
 #!/bin/bash
 
+echo -e "
+______     _                     _   
+|  _  \   | |                   | |  
+| | | |___| |__  _ __ __ _ _ __ | |_ 
+| | | / _ \ '_ \| '__/ _\` | '_ \| __|
+| |/ /  __/ |_) | | | (_| | | | | |_ 
+|___/ \___|_.__/|_|  \__,_|_| |_|\__|
+                                     
+Debrant - Debian Vagrant
+Version 0.1.1 (2013/10/23)
+https://github.com/swergroup/debrant
+"
+
 # running time measure
 start_seconds=`date +%s`
 # network check
 ping_result=`ping -c 2 8.8.8.8 2>&1`
-
 
 # Text color variables
 txtred='\e[0;31m'       # red
@@ -27,12 +39,13 @@ txtrst='\e[0m'          # Text reset
  
 # Feedback indicators
 info="\n${bldblu} - ${txtrst}"
+list="${bldwht} * ${txtrst}"
 pass="${bldgrn} * ${txtrst}"
 warn="${bldylw} ! ${txtrst}"
 dead="${bldred}!!!${txtrst}"
 
 function headinfo {
-	echo -e "${info} $1 ${txtrst}\n"
+	echo -e "${info} ${bldwht} $1 ${txtrst}\n"
 }
 
 # Debian package checklist
@@ -122,7 +135,6 @@ pear_packages=(
 	phpdoc/phpDocumentor_Template_checkstyle
 	phpdoc/phpDocumentor_Template_new_black
 	phpdoc/phpDocumentor_Template_responsive
-	phpdoc/
 )
 
 npm_packages=(
@@ -145,16 +157,19 @@ npm_packages=(
 
 export DEBIAN_FRONTEND=noninteractive
 
-sudo rm /etc/apt/sources.list.d/grml.list
+if [ -f /etc/apt/sources.list.d/grml.list ]; then
+	sudo rm /etc/apt/sources.list.d/grml.list
+fi
+
 if [ -f /srv/config/sources.list ]; then
 	headinfo "Add new APT main sources"
 	unlink /etc/apt/sources.list
 	ln -s /srv/config/sources.list /etc/apt/sources.list
 
-	headinfo "Add missing repostitory GPG keys"
+	headinfo "APT repositories GPG keys"
 	
 	# percona server (mysql)
-	apt-key adv --keyserver keys.gnupg.net --recv-keys 1C4CBDCDCD2EFD2A	
+	apt-key adv --keyserver keys.gnupg.net --recv-keys 1C4CBDCDCD2EFD2A	2>&1 > /dev/null
 	# varnish
 	wget -qO- http://repo.varnish-cache.org/debian/GPG-key.txt | apt-key add -
 
@@ -190,7 +205,6 @@ else
 	apt-get clean
 fi
 
-
 if composer --version | grep -q 'Composer version';
 then
 	headinfo "Updating Composer"
@@ -220,9 +234,10 @@ do
 done
  
 headinfo "Install/upgrade PEAR packages"
+echo -e "   'Install failed' means 'package already installed'\n"
 for pearpkg in "${pear_packages[@]}"
 do
-  pear -q install -a $pearpkg
+	echo -e "${list} $pearpkg $(pear -q install -a $pearpkg)"
 done
 
 
@@ -247,13 +262,13 @@ else
 fi
 
 
-if [ npm --version ]; then
-	headinfo "Node.js already installed"
-	npm update
+if npm --version | grep -q '1.3.11'; then
+	headinfo "Node.js already installed: npm update"
+	npm update 2>&1 > /dev/null
 else
 	headinfo "Installing Node.js"
 	wget -q -O /tmp/node-v0.10.21-linux-x86.tar.gz http://nodejs.org/dist/v0.10.21/node-v0.10.21-linux-x86.tar.gz
-	tar xzvf /tmp/node-v0.10.21-linux-x86.tar.gz --strip-components=1 -C /usr/local
+	tar xzf /tmp/node-v0.10.21-linux-x86.tar.gz --strip-components=1 -C /usr/local
 	npm update
 	headinfo "Installing Node.js packages"
 	for npm in "${npm_packages[@]}"
@@ -263,15 +278,22 @@ else
 fi
 	
 
+#branding
+cat <<BRANDING > /etc/motd
+______     _                     _   
+|  _  \   | |                   | |  
+| | | |___| |__  _ __ __ _ _ __ | |_ 
+| | | / _ \ '_ \| '__/ _\` | '_ \| __|
+| |/ /  __/ |_) | | | (_| | | | | |_ 
+|___/ \___|_.__/|_|  \__,_|_| |_|\__|
+                                     
+BRANDING
 
 # cleaning
-headinfo "Cleaning"
+headinfo "Final housekeeping"
 apt-get autoclean
 apt-get autoremove
 rm -f /var/cache/apt/archives/*.deb
-
-#printf "\n\e[36m  * Choosing the faster APT mirror.. \n\n\e[39m"
-#netselect-apt -n -c IT -o /etc/apt/sources.list
 
 end_seconds=`date +%s`
 echo -----------------------------
