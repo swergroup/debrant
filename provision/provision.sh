@@ -55,7 +55,6 @@ apt_package_check_list=(
 	percona-server-client
 	percona-toolkit
 	php-pear
-	php5-apcu
 	php5-cli
 	php5-common
 	php5-dev
@@ -68,9 +67,7 @@ apt_package_check_list=(
 	php5-mcrypt
 	php5-memcache
 	php5-memcached
-	php5-mongo
 	php5-mysql
-	php5-readline
 	php5-sqlite
 	php5-xdebug
 	php5-xmlrpc
