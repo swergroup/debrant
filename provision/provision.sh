@@ -33,26 +33,31 @@ dead="${bldred}!!!${txtrst}"
 
 # Debian package checklist
 apt_package_check_list=(
+	build-essential
 	byobu
 	curl
+	debian-keyring
 	deborphan
 	findutils
 	gettext
-	geoip-database-contrib
+	geoip-bin
+	geoip-database
 	git
 	git-svn
 	gnupg2
 	gnupg-curl
+	gnu-standards
 	kexec-tools
 	links
+	libmemcached
 	localepurge
 	lynx
+	mcrypt
+	memcached
 	mlocate
 	nginx-extras
 	ntp
 	ntpdate
-	percona-server-server
-	percona-server-client
 	percona-toolkit
 	php-pear
 	php5-cli
@@ -82,6 +87,46 @@ apt_package_check_list=(
 	xtrabackup
 	zsh
 )
+
+
+pear_channels=(
+	components.ez.no
+  pear.phpunit.de
+	pear.netpirates.net
+	pear.symfony.com
+)
+ 
+pear_packages=(
+  PHPDoc-0.1.0
+  phpunit/PHP_CodeCoverage
+  phpunit/PHP_CodeSniffer
+  phpunit/PHPUnit
+  phpunit/PHPUnit_Selenium
+  phpunit/PHPUnit_MockObject
+  phpunit/phpcov
+  phpunit/phpcpd
+  phpunit/phpdcd-0.9.3
+  phpunit/phploc
+)
+
+ 
+npm_packages=(
+  grunt-asciify
+  grunt-cli
+  grunt-contrib-uglify
+  grunt-contrib-compress
+  grunt-contrib-csslint
+  grunt-contrib-imagemin
+  grunt-css
+  grunt-curl
+  grunt-jslint
+  grunt-rsync
+  grunt-phpcs
+  grunt-phpdocumentor
+  grunt-phplint
+  grunt-shell
+)
+
 
 if [ -f /srv/config/sources.list ]; then
 	echo -e "${info} Add new APT main sources"
@@ -127,7 +172,71 @@ else
 	apt-get install --force-yes --assume-yes ${apt_package_install_list[@]}
 
 	apt-get clean
-	update-alternatives --set x-www-browser /usr/bin/chromium
+fi
+
+
+if composer --version | grep -q 'Composer version';
+then
+	printf "Updating Composer...\n"
+	composer self-update
+else
+	printf "Installing Composer...\n"
+	curl -sS https://getcomposer.org/installer | php
+	chmod +x composer.phar
+	mv composer.phar /usr/local/bin/composer
+fi
+
+echo -e "${info} PEAR upgrade"
+pear config-set auto_discover 1
+for chan in "${pear_channels[@]}"
+do
+  pear channel-discover $chan
+done
+ 
+echo -e "${info} Installing PEAR packages"
+for pearpkg in "${pear_packages[@]}"
+do
+  pear install -a $pearpkg
+done
+ 
+echo -e "${info} Installing Node.js packages"
+for npm in "${npm_packages[@]}"
+do
+  npm install -g $npm
+done
+
+
+if [ ! -d /srv/www/wp-cli ]
+then
+	printf "\nDownloading wp-cli.....http://wp-cli.org\n"
+	git clone git://github.com/wp-cli/wp-cli.git /srv/www/wp-cli
+	cd /srv/www/wp-cli
+	composer install
+else
+	printf "\nUpdating wp-cli....\n"
+	cd /srv/www/wp-cli
+	git pull --rebase origin master
+fi
+# Link `wp` to the `/usr/local/bin` directory
+ln -sf /srv/www/wp-cli/bin/wp /usr/local/bin/wp
+
+# Install and configure the latest stable version of WordPress
+if [ ! -d /srv/www/wordpress-default ]
+then
+	printf "Downloading WordPress.....http://wordpress.org\n"
+	cd /srv/www/
+	curl -O http://wordpress.org/latest.tar.gz
+	tar -xvf latest.tar.gz
+	mv wordpress wordpress-default
+	rm latest.tar.gz
+	cd /srv/www/wordpress-default
+	printf "Configuring WordPress...\n"
+	wp core config --dbname=wordpress_default --dbuser=wp --dbpass=wp --quiet --extra-php <<PHP
+define( "WP_DEBUG", true );
+PHP
+	wp core install --url=local.wordpress.dev --quiet --title="Local WordPress Dev" --admin_name=admin --admin_email="admin@local.dev" --admin_password="password"
+else
+	printf "Skip WordPress installation, already available\n"
 fi
 
 
