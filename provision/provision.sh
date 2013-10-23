@@ -184,6 +184,16 @@ else
 	mv composer.phar /usr/local/bin/composer
 fi
 
+if scrutinizer --version | grep -q 'scrutinizer version';
+then
+	printf "Updating Scrutinizer...\n"
+	scrutinizer self-update
+else
+	printf "Installing Scrutinizer...\n"
+	wget .O /usr/local/bin/scrutinizer https://scrutinizer-ci.com/scrutinizer.phar
+	chmod +x /usr/local/bin/scrutinizer
+fi
+
 echo -e "${info} PEAR upgrade"
 pear config-set auto_discover 1
 for chan in "${pear_channels[@]}"
@@ -217,7 +227,6 @@ else
 fi
 # Link `wp` to the `/usr/local/bin` directory
 ln -sf /srv/www/wp-cli/bin/wp /usr/local/bin/wp
-
 
 
 
