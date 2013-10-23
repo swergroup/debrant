@@ -34,4 +34,3 @@ Download: [wheezy32.box](tools.swergroup.com/downloads/wheezy32.box) (190MB)
 * `database` -- database folders and scripts
 * `www` -- website folders
 
-## Code Credits & Inspirations
