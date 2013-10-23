@@ -22,6 +22,8 @@ Vagrant.configure("2") do |config|
   config.vm.synced_folder "config/", "/srv/config"
 #  config.vm.synced_folder "config/nginx-config/sites/", "/etc/nginx/custom-sites"
   config.vm.synced_folder "www/", "/srv/www/", :owner => "www-data", :extra => 'dmode=775,fmode=774'
+  config.vm.synced_folder "shared/", "/srv/shared", :owner => "www-data", :extra => 'dmode=775,fmode=774'
+
 
   # Customfile - POSSIBLY UNSTABLE
   if File.exists?('Customfile') then

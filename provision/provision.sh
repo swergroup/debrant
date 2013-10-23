@@ -18,6 +18,7 @@ bldwht='\e[1;37m'       # white
 txtund=$(tput sgr 0 1)  # Underline
 txtbld=$(tput bold)     # Bold
 txtrst='\e[0m'          # Text reset
+txtdim='\e[2m'
  
 # Feedback indicators
 info="\n${bldblu} % ${txtrst}"
@@ -27,10 +28,12 @@ warn="${bldylw} ! ${txtrst}"
 dead="${bldred}!!!${txtrst}"
 
 function headinfo {
-	echo -e "${info} ${bldwht} $1 ${txtrst}\n"
+	echo -e "${txtrst}"
+	echo -e "\n${bldblu}###${txtrst} ${bldwht}$1${txtrst}\n"
+	echo -e "${txtrst}"
 }
 
-echo -e "${bldcyn}
+echo -e "${bldylw}
 ______     _                     _   
 |  _  \   | |                   | |  
 | | | |___| |__  _ __ __ _ _ __ | |_ 
@@ -40,7 +43,7 @@ ______     _                     _
                                      
 ${txtrst}
 Debrant - Debian Vagrant
-Version ${bldwht} 0.1.1 ${txtrst} (2013/10/23)
+Version ${txtgrn} 0.1.1 ${txtrst} (2013/10/23)
 https://github.com/swergroup/debrant
 "
 
@@ -86,7 +89,9 @@ apt_package_check_list=(
 	ntp
 	ntpdate
 	percona-toolkit
-	percona-server-server
+	percona-server-client-5.5
+	percona-server-common-5.5
+	percona-server-server-5.5
 	php-apc
 	php-pear
 	php5-cli
@@ -174,7 +179,6 @@ if [ -f /srv/config/sources.list ]; then
 	ln -s /srv/config/sources.list /etc/apt/sources.list
 
 	headinfo "APT repositories GPG keys"
-	
 	# percona server (mysql)
 	apt-key adv --keyserver keys.gnupg.net --recv-keys 1C4CBDCDCD2EFD2A	2>&1 > /dev/null
 
@@ -216,7 +220,6 @@ else
 	aptitude purge ~c
 	apt-get update --assume-yes
 	apt-get install --force-yes --assume-yes ${apt_package_install_list[@]}
-
 	apt-get clean
 fi
 
@@ -239,6 +242,7 @@ else
 	headinfo "Installing Scrutinizer"
 	wget -q -O /usr/local/bin/scrutinizer https://scrutinizer-ci.com/scrutinizer.phar
 	chmod +x /usr/local/bin/scrutinizer
+	scrutinizer -v
 fi
 
 headinfo "Discover PEAR channels"
@@ -268,12 +272,12 @@ then
 	composer require oxford-themes/wp-cli-git-command=dev-master
 	composer require pods-framework/pods-wp-cli=dev-master
 	# Link `wp` to the `/usr/local/bin` directory
-	ln -sf /srv/www/wp-cli/bin/wp /usr/local/bin/wp
 else
 	headinfo "Updating wp-cli"
 	cd /srv/www/wp-cli
 	composer update
 fi
+ln -sf /srv/www/wp-cli/bin/wp /usr/local/bin/wp
 
 
 if npm --version | grep -q '1.3.11'; then
@@ -320,6 +324,33 @@ ______     _                     _
                                      
 BRANDING
 
+# services
+headinfo "Percona Server (MySQL) Configuration"
+if [ ! -f /etc/mysql/my.cnf ]; then
+#	mv /etc/mysql/my.cnf /etc/mysql/my.cnf-backup
+	ln -s /srv/config/my.cnf /etc/mysql/my.cnf
+	service mysql restart
+	mysql -u root -e "CREATE FUNCTION fnv1a_64 RETURNS INTEGER SONAME 'libfnv1a_udf.so'"
+	mysql -u root -e "CREATE FUNCTION fnv_64 RETURNS INTEGER SONAME 'libfnv_udf.so'"
+	mysql -u root -e "CREATE FUNCTION murmur_hash RETURNS INTEGER SONAME 'libmurmur_udf.so'"
+fi
+
+# WP #1: theme test setup
+if [ ! -d /srv/www/theme-test ]
+then
+	headinfo "Installing WordPress #1: theme test setup"
+	mkdir /srv/www/theme-test
+	chown www-data:www-data /srv/www/theme-test
+	cd /srv/www/theme-test
+	wp core download
+	wp core config --dbname=wordpress_themetest --dbuser=root --dbpass='' --quiet --extra-php <<PHP
+define( "WP_DEBUG", true );
+PHP
+	wp core install --url=debrant.themetest.dev --quiet --title="Theme Test" --admin_name=admin --admin_email="admin@debrant.themetest.dev" --admin_password="password"
+else
+	headinfo "Skip WordPress #1 installation, already available"
+fi
+
 # cleaning
 headinfo "Final housekeeping"
 apt-get autoclean
@@ -327,16 +358,6 @@ apt-get autoremove
 rm -f /var/cache/apt/archives/*.deb
 apt-get update
 apt-get upgrade
-
-# services
-headinfo "Percona Server (MySQL) Configuration"
-ln -s /srv/config/my.cnf /etc/mysql/my.cnf
-service mysql restart
-mysql -u root -e "CREATE FUNCTION fnv1a_64 RETURNS INTEGER SONAME 'libfnv1a_udf.so'"
-mysql -u root -e "CREATE FUNCTION fnv_64 RETURNS INTEGER SONAME 'libfnv_udf.so'"
-mysql -u root -e "CREATE FUNCTION murmur_hash RETURNS INTEGER SONAME 'libmurmur_udf.so'"
-
-#service mysql restart
 
 end_seconds=`date +%s`
 echo -----------------------------
