@@ -3,4 +3,3 @@ deb http://security.debian.org/ wheezy/updates main
 deb http://repo.percona.com/apt wheezy main
 deb http://repo.varnish-cache.org/debian/ wheezy varnish-3.0
 deb http://deb.grml.org/ grml-stable main
-deb http://packages.dotdeb.org stable all

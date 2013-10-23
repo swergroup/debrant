@@ -14,7 +14,7 @@ Vagrant box direct download: [wheezy32.box](http://tools.swergroup.com/downloads
 * [Nginx](http://nginx.org)
 * [Node.js v0.10.21](http://nodejs.org)
 * [Percona Server v5.6](http://www.percona.com/software/percona-server)
-* [PHP v5.4.4](http://php.net)
+* [PHP v5.4.4](http://php.net) (5.5 available)
 * [Pound](http://www.apsis.ch/pound)
 * [Varnish](https://www.varnish-cache.org)
 * [Z shell (w/ GRML.org setup)](http://grml.org/zsh/)

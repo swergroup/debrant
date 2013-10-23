@@ -176,11 +176,8 @@ if [ -f /srv/config/sources.list ]; then
 	headinfo "APT repositories GPG keys"
 	
 	# percona server (mysql)
-	apt-key -q adv --keyserver keys.gnupg.net --recv-keys 1C4CBDCDCD2EFD2A	2>&1 > /dev/null
+	apt-key adv --keyserver keys.gnupg.net --recv-keys 1C4CBDCDCD2EFD2A	2>&1 > /dev/null
 
-	# dotdeb
-	apt-key -q adv --keyserver keys.gnupg.net --recv-keys E9C74FEEA2098A6E	2>&1 > /dev/null
-	
 	# varnish
 	wget -qO- http://repo.varnish-cache.org/debian/GPG-key.txt | apt-key add -
 
