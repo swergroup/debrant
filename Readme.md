@@ -1,12 +1,11 @@
 # Debrant 
 
-[Debian](https://debian.org)-based web development [Vagrant](http://vagrantup.com), heavily inspired ( = half forked ) from [10up/varying-vagrant-vagrants](https://github.com/10up/varying-vagrant-vagrants).
+[Debian](https://debian.org)-based web development [Vagrant](http://vagrantup.com), heavily inspired ( = half forked ) from [10up/varying-vagrant-vagrants](https://github.com/10up/varying-vagrant-vagrants). It's a work in progress, please do not expect anything working (except the vagrant box).
 
 Our custom Vagrant box is a 32 bit Debian Wheezy built via [grml-debootstrap](http://grml.org/grml-debootstrap/), with networking, VirtualBox additions and the basic tools. Everything else will be insalled via the custom provision bash scripts, which can be modified or replaced as needed.
 
 Download: [wheezy32.box](http://tools.swergroup.com/downloads/wheezy32.box) (188MB)
 
-It's a work in progress, please do not expect anything working.
 
 ## Features
 
