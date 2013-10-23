@@ -1,8 +1,8 @@
 # Debrant 
 
-Debrant (Debian Vagrant) is a [Debian](https://debian.org)-based web development and learning [Vagrant](http://vagrantup.com) project, heavily inspired ( = half forked ) from [10up/varying-vagrant-vagrants](https://github.com/10up/varying-vagrant-vagrants). It's a work in progress, please do not expect anything working (except the vagrant box).
+Debrant (Debian Vagrant) is a [Debian](https://debian.org)-based web development and learning [Vagrant](http://vagrantup.com) project, heavily inspired ( = half forked ) from [10up/varying-vagrant-vagrants](https://github.com/10up/varying-vagrant-vagrants). Please note: it's a work in progress.
 
-Our custom Vagrant box is a i686 Debian Wheezy vm built via [grml-debootstrap](http://grml.org/grml-debootstrap/) with networking, VirtualBox additions and the base system; everything else will be insalled via the custom provision bash scripts, which can be modified or replaced as needed.
+Our custom Vagrant box is a i686 Debian Wheezy vm built via [grml-debootstrap](http://grml.org/grml-debootstrap/) with networking, VirtualBox additions and the base system; everything else (~244MB) will be installed via the custom provision bash scripts, which can be modified or replaced as needed.
 
 Vagrant box direct download: [wheezy32.box](http://tools.swergroup.com/downloads/wheezy32.box) (188MB)
 
