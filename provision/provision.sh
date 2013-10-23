@@ -26,16 +26,18 @@ txtbld=$(tput bold)     # Bold
 txtrst='\e[0m'          # Text reset
  
 # Feedback indicators
-info="\n${bldblu} - ${txtrst}\n"
+info="\n${bldblu} - ${txtrst}"
 pass="${bldgrn} * ${txtrst}"
 warn="${bldylw} ! ${txtrst}"
 dead="${bldred}!!!${txtrst}"
 
+function headinfo {
+	echo -e "${info} $1 ${txtrst}\n"
+}
+
 # Debian package checklist
 apt_package_check_list=(
-	build-essential
 	byobu
-	checkinstall
 	curl
 	debian-keyring
 	deborphan
@@ -50,7 +52,8 @@ apt_package_check_list=(
 	gnu-standards
 	kexec-tools
 	links
-	libmemcached
+	libmemcache0
+	libmemcached10
 	localepurge
 	lynx
 	mcrypt
@@ -129,11 +132,11 @@ npm_packages=(
 
 
 if [ -f /srv/config/sources.list ]; then
-	echo -e "${info} Add new APT main sources"
+	headinfo "Add new APT main sources"
 	unlink /etc/apt/sources.list
 	ln -s /srv/config/sources.list /etc/apt/sources.list
 
-	echo -e "${info} Add missing repostitory GPG keys"
+	headinfo "Add missing repostitory GPG keys"
 	
 	# percona server (mysql)
 	apt-key adv --keyserver keys.gnupg.net --recv-keys 1C4CBDCDCD2EFD2A	
@@ -141,20 +144,20 @@ if [ -f /srv/config/sources.list ]; then
 	wget -qO- http://repo.varnish-cache.org/debian/GPG-key.txt | apt-key add -
 
 elif [ -f /srv/config/custom-sources.list ]; then	
-	echo -e "${info} Add new APT custom sources"
+	headinfo "Add new APT custom sources"
 	unlink /etc/apt/sources.list.d/custom-sources.list
 	ln -s /srv/config/custom-sources.list /etc/apt/sources.list.d/custom-sources.list
 fi
 
 
-echo -e "${info} Checking Debrant system requirement"
+headinfo "Checking Debrant system requirement"
 for pkg in "${apt_package_check_list[@]}"
 do
 	if dpkg -s $pkg 2>&1 | grep -q 'Status: install ok installed';
 	then 
-		echo -e "${pass} $pkg already installed"
+		echo -e "${pass} $pkg"
 	else
-		echo -e "${warn} $pkg missing"
+		echo -e "${warn} $pkg"
 		apt_package_install_list+=($pkg)
 	fi
 done
@@ -164,11 +167,9 @@ if [ ${#apt_package_install_list[@]} = 0 ];
 then 
 	echo -e "${pass} Everything is already installed"
 else
-	echo -e "${info} APT init"
+	headinfo "APT init/install"
 	aptitude purge ~c
 	apt-get update --assume-yes
-
-	echo -e "${info} APT install"
 	apt-get install --force-yes --assume-yes ${apt_package_install_list[@]}
 
 	apt-get clean
@@ -177,10 +178,10 @@ fi
 
 if composer --version | grep -q 'Composer version';
 then
-	printf "Updating Composer...\n"
+	headinfo "Updating Composer"
 	composer self-update
 else
-	printf "Installing Composer...\n"
+	headinfo "Installing Composer"
 	curl -sS https://getcomposer.org/installer | php
 	chmod +x composer.phar
 	mv composer.phar /usr/local/bin/composer
@@ -188,37 +189,31 @@ fi
 
 if scrutinizer --version | grep -q 'scrutinizer version';
 then
-	printf "Updating Scrutinizer...\n"
+	headinfo "Updating Scrutinizer"
 	scrutinizer self-update
 else
-	printf "Installing Scrutinizer...\n"
-	wget .O /usr/local/bin/scrutinizer https://scrutinizer-ci.com/scrutinizer.phar
+	headinfo "Installing Scrutinizer"
+	wget -O /usr/local/bin/scrutinizer https://scrutinizer-ci.com/scrutinizer.phar
 	chmod +x /usr/local/bin/scrutinizer
 fi
 
-echo -e "${info} PEAR channels upgrade"
+headinfo "Discover PEAR channels"
 pear config-set auto_discover 1
 for chan in "${pear_channels[@]}"
 do
   pear channel-discover $chan
 done
  
-echo -e "${info} Installing PEAR packages"
+headinfo "Install/upgrade PEAR packages"
 for pearpkg in "${pear_packages[@]}"
 do
   pear install -a $pearpkg
 done
  
-echo -e "${info} Installing Node.js packages"
-for npm in "${npm_packages[@]}"
-do
-  npm install -g $npm
-done
-
 
 if [ ! -d /srv/www/wp-cli ]
 then
-	echo -e "${info} Downloading wp-cli"
+	headinfo "Downloading wp-cli"
 	git clone git://github.com/wp-cli/wp-cli.git /srv/www/wp-cli
 	cd /srv/www/wp-cli
 	composer install
@@ -231,13 +226,31 @@ then
 	# Link `wp` to the `/usr/local/bin` directory
 	ln -sf /srv/www/wp-cli/bin/wp /usr/local/bin/wp
 else
-	echo -e "${info} Updating wp-cli"
+	headinfo "Updating wp-cli"
 	cd /srv/www/wp-cli
 	composer update
 fi
 
+
+if [ ! npm --version ]; then
+	headinfo "Node.js install"
+	wget -O /tmp/node-v0.10.21-linux-x86.tar.gz http://nodejs.org/dist/v0.10.21/node-v0.10.21-linux-x86.tar.gz
+	tar xzvf /tmp/node-v0.10.21-linux-x86.tar.gz --strip-components=1 -C /usr/local
+	npm update
+else
+	headinfo "Node.js already installed"
+	npm update
+fi
+	
+headinfo "Installing Node.js packages"
+for npm in "${npm_packages[@]}"
+do
+  npm install -g $npm
+done
+
+
 # cleaning
-echo -e "${info} Cleaning"
+headinfo "Cleaning"
 apt-get autoclean
 apt-get autoremove
 rm -f /var/cache/apt/archives/*.deb
