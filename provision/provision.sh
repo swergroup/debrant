@@ -26,7 +26,7 @@ txtbld=$(tput bold)     # Bold
 txtrst='\e[0m'          # Text reset
  
 # Feedback indicators
-info="${bldblu} - ${txtrst}"
+info="\n${bldblu} - ${txtrst}\n"
 pass="${bldgrn} * ${txtrst}"
 warn="${bldylw} ! ${txtrst}"
 dead="${bldred}!!!${txtrst}"
@@ -88,7 +88,6 @@ apt_package_check_list=(
 	zsh
 )
 
-
 pear_channels=(
 	components.ez.no
   pear.phpunit.de
@@ -109,7 +108,6 @@ pear_packages=(
   phpunit/phploc
 )
 
- 
 npm_packages=(
   grunt-asciify
   grunt-cli
@@ -208,36 +206,18 @@ done
 
 if [ ! -d /srv/www/wp-cli ]
 then
-	printf "\nDownloading wp-cli.....http://wp-cli.org\n"
+	echo -e "${info} Downloading wp-cli"
 	git clone git://github.com/wp-cli/wp-cli.git /srv/www/wp-cli
 	cd /srv/www/wp-cli
 	composer install
 else
-	printf "\nUpdating wp-cli....\n"
+	echo -e "${info} Updating wp-cli"
 	cd /srv/www/wp-cli
 	git pull --rebase origin master
 fi
 # Link `wp` to the `/usr/local/bin` directory
 ln -sf /srv/www/wp-cli/bin/wp /usr/local/bin/wp
 
-# Install and configure the latest stable version of WordPress
-if [ ! -d /srv/www/wordpress-default ]
-then
-	printf "Downloading WordPress.....http://wordpress.org\n"
-	cd /srv/www/
-	curl -O http://wordpress.org/latest.tar.gz
-	tar -xvf latest.tar.gz
-	mv wordpress wordpress-default
-	rm latest.tar.gz
-	cd /srv/www/wordpress-default
-	printf "Configuring WordPress...\n"
-	wp core config --dbname=wordpress_default --dbuser=wp --dbpass=wp --quiet --extra-php <<PHP
-define( "WP_DEBUG", true );
-PHP
-	wp core install --url=local.wordpress.dev --quiet --title="Local WordPress Dev" --admin_name=admin --admin_email="admin@local.dev" --admin_password="password"
-else
-	printf "Skip WordPress installation, already available\n"
-fi
 
 
 
