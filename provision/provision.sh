@@ -35,6 +35,7 @@ dead="${bldred}!!!${txtrst}"
 apt_package_check_list=(
 	build-essential
 	byobu
+	checkinstall
 	curl
 	debian-keyring
 	deborphan
@@ -78,6 +79,7 @@ apt_package_check_list=(
 	php5-xmlrpc
 	pound
 	screen
+	stress
 	unar
 	unrar
 	unzip
@@ -194,7 +196,7 @@ else
 	chmod +x /usr/local/bin/scrutinizer
 fi
 
-echo -e "${info} PEAR upgrade"
+echo -e "${info} PEAR channels upgrade"
 pear config-set auto_discover 1
 for chan in "${pear_channels[@]}"
 do
@@ -220,15 +222,19 @@ then
 	git clone git://github.com/wp-cli/wp-cli.git /srv/www/wp-cli
 	cd /srv/www/wp-cli
 	composer install
+	composer config repositories.wp-cli composer http://wp-cli.org/package-index/
+	composer require pixline/wp-cli-theme-test-command=dev-master
+	composer require danielbachhuber/wp-cli-stat-command=dev-master
+	composer require humanmade/wp-remote-cli=dev-master
+	composer require oxford-themes/wp-cli-git-command=dev-master
+	composer require pods-framework/pods-wp-cli=dev-master
+	# Link `wp` to the `/usr/local/bin` directory
+	ln -sf /srv/www/wp-cli/bin/wp /usr/local/bin/wp
 else
 	echo -e "${info} Updating wp-cli"
 	cd /srv/www/wp-cli
-	git pull --rebase origin master
+	composer update
 fi
-# Link `wp` to the `/usr/local/bin` directory
-ln -sf /srv/www/wp-cli/bin/wp /usr/local/bin/wp
-
-
 
 # cleaning
 echo -e "${info} Cleaning"
