@@ -51,9 +51,11 @@ function headinfo {
 # Debian package checklist
 apt_package_check_list=(
 	byobu
+	colordiff
 	curl
 	debian-keyring
 	deborphan
+	dos2unix
 	findutils
 	gettext
 	geoip-bin
@@ -63,6 +65,8 @@ apt_package_check_list=(
 	gnupg2
 	gnupg-curl
 	gnu-standards
+	graphviz
+	imagemagick
 	kexec-tools
 	links
 	libaio1
@@ -70,7 +74,7 @@ apt_package_check_list=(
 	libnet-daemon-perl
 	libmemcache0
 	libmemcached10
-	libmysqlclient18=5.5.33-rel31.1-568.wheezy
+	libmysqlclient18=5.5.33-rel31.1-569.wheezy
 	localepurge
 	lynx
 	mcrypt
@@ -81,6 +85,7 @@ apt_package_check_list=(
 	ntpdate
 	percona-toolkit
 	percona-server-server
+	php-apc
 	php-pear
 	php5-cli
 	php5-common
@@ -179,6 +184,13 @@ elif [ -f /srv/config/custom-sources.list ]; then
 	ln -s /srv/config/custom-sources.list /etc/apt/sources.list.d/custom-sources.list
 fi
 
+# MySQL
+#
+# Use debconf-set-selections to specify the default password for the root MySQL
+# account. This runs on every provision, even if MySQL has been installed. If
+# MySQL is already installed, it will not affect anything. 
+echo mysql-server mysql-server/root_password password root | debconf-set-selections
+echo mysql-server mysql-server/root_password_again password root | debconf-set-selections
 
 headinfo "Checking Debrant system requirement"
 for pkg in "${apt_package_check_list[@]}"
@@ -277,6 +289,22 @@ else
 	done
 fi
 	
+# Configuration for nginx
+if [ ! -e /etc/nginx/server.key ]; then
+        headinfo "Generate Nginx server private key..."
+        vvvgenrsa=`openssl genrsa -out /etc/nginx/server.key 2048 2>&1`
+        echo $vvvgenrsa
+fi
+if [ ! -e /etc/nginx/server.csr ]; then
+        headinfo "Generate Certificate Signing Request (CSR)..."
+        openssl req -new -batch -key /etc/nginx/server.key -out /etc/nginx/server.csr
+fi
+if [ ! -e /etc/nginx/server.crt ]; then
+        headinfo "Sign the certificate using the above private key and CSR..."
+        vvvsigncert=`openssl x509 -req -days 365 -in /etc/nginx/server.csr -signkey /etc/nginx/server.key -out /etc/nginx/server.crt 2>&1`
+        echo $vvvsigncert
+fi
+
 
 #branding
 cat <<BRANDING > /etc/motd
