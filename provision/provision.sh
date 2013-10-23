@@ -1,23 +1,5 @@
 #!/bin/bash
 
-echo -e "
-______     _                     _   
-|  _  \   | |                   | |  
-| | | |___| |__  _ __ __ _ _ __ | |_ 
-| | | / _ \ '_ \| '__/ _\` | '_ \| __|
-| |/ /  __/ |_) | | | (_| | | | | |_ 
-|___/ \___|_.__/|_|  \__,_|_| |_|\__|
-                                     
-Debrant - Debian Vagrant
-Version 0.1.1 (2013/10/23)
-https://github.com/swergroup/debrant
-"
-
-# running time measure
-start_seconds=`date +%s`
-# network check
-ping_result=`ping -c 2 8.8.8.8 2>&1`
-
 # Text color variables
 txtred='\e[0;31m'       # red
 txtgrn='\e[0;32m'       # green
@@ -38,8 +20,8 @@ txtbld=$(tput bold)     # Bold
 txtrst='\e[0m'          # Text reset
  
 # Feedback indicators
-info="\n${bldblu} - ${txtrst}"
-list="${bldwht} * ${txtrst}"
+info="\n${bldblu} % ${txtrst}"
+list="${bldcyn} - ${txtrst}"
 pass="${bldgrn} * ${txtrst}"
 warn="${bldylw} ! ${txtrst}"
 dead="${bldred}!!!${txtrst}"
@@ -47,6 +29,25 @@ dead="${bldred}!!!${txtrst}"
 function headinfo {
 	echo -e "${info} ${bldwht} $1 ${txtrst}\n"
 }
+
+echo -e "${bldcyn}
+______     _                     _   
+|  _  \   | |                   | |  
+| | | |___| |__  _ __ __ _ _ __ | |_ 
+| | | / _ \ '_ \| '__/ _\` | '_ \| __|
+| |/ /  __/ |_) | | | (_| | | | | |_ 
+|___/ \___|_.__/|_|  \__,_|_| |_|\__|
+                                     
+${txtrst}
+Debrant - Debian Vagrant
+Version ${bldwht} 0.1.1 ${txtrst} (2013/10/23)
+https://github.com/swergroup/debrant
+"
+
+# running time measure
+start_seconds=`date +%s`
+# network check
+ping_result=`ping -c 2 8.8.8.8 2>&1`
 
 # Debian package checklist
 apt_package_check_list=(
@@ -57,6 +58,7 @@ apt_package_check_list=(
 	deborphan
 	dos2unix
 	findutils
+	ffmpeg
 	gettext
 	geoip-bin
 	geoip-database
@@ -174,7 +176,11 @@ if [ -f /srv/config/sources.list ]; then
 	headinfo "APT repositories GPG keys"
 	
 	# percona server (mysql)
-	apt-key adv --keyserver keys.gnupg.net --recv-keys 1C4CBDCDCD2EFD2A	2>&1 > /dev/null
+	apt-key -q adv --keyserver keys.gnupg.net --recv-keys 1C4CBDCDCD2EFD2A	2>&1 > /dev/null
+
+	# dotdeb
+	apt-key -q adv --keyserver keys.gnupg.net --recv-keys E9C74FEEA2098A6E	2>&1 > /dev/null
+	
 	# varnish
 	wget -qO- http://repo.varnish-cache.org/debian/GPG-key.txt | apt-key add -
 
@@ -217,7 +223,7 @@ else
 	apt-get clean
 fi
 
-if composer --version | grep -q 'Composer version';
+if which composer;
 then
 	headinfo "Updating Composer"
 	composer self-update
@@ -228,7 +234,7 @@ else
 	mv composer.phar /usr/local/bin/composer
 fi
 
-if scrutinizer --version | grep -q 'scrutinizer version';
+if which scrutinizer;
 then
 	headinfo "Updating Scrutinizer"
 	scrutinizer self-update
@@ -246,10 +252,9 @@ do
 done
  
 headinfo "Install/upgrade PEAR packages"
-echo -e "   'Install failed' means 'package already installed'\n"
 for pearpkg in "${pear_packages[@]}"
 do
-	echo -e "${list} $pearpkg $(pear -q install -a $pearpkg)"
+	echo -e "${list} $pearpkg $(pear -q install -a $pearpkg 2>&1 > /dev/null)"
 done
 
 
@@ -276,7 +281,7 @@ fi
 
 if npm --version | grep -q '1.3.11'; then
 	headinfo "Node.js already installed: npm update"
-	npm update 2>&1 > /dev/null
+	npm update
 else
 	headinfo "Installing Node.js"
 	wget -q -O /tmp/node-v0.10.21-linux-x86.tar.gz http://nodejs.org/dist/v0.10.21/node-v0.10.21-linux-x86.tar.gz
@@ -285,7 +290,8 @@ else
 	headinfo "Installing Node.js packages"
 	for npm in "${npm_packages[@]}"
 	do
-	  npm install -g $npm
+		echo -e "${list} $npm"
+	  npm install -g $npm 2>&1 > /dev/null
 	done
 fi
 	
@@ -322,6 +328,18 @@ headinfo "Final housekeeping"
 apt-get autoclean
 apt-get autoremove
 rm -f /var/cache/apt/archives/*.deb
+apt-get update
+apt-get upgrade
+
+# services
+headinfo "Percona Server (MySQL) Configuration"
+ln -s /srv/config/my.cnf /etc/mysql/my.cnf
+service mysql restart
+mysql -u root -e "CREATE FUNCTION fnv1a_64 RETURNS INTEGER SONAME 'libfnv1a_udf.so'"
+mysql -u root -e "CREATE FUNCTION fnv_64 RETURNS INTEGER SONAME 'libfnv_udf.so'"
+mysql -u root -e "CREATE FUNCTION murmur_hash RETURNS INTEGER SONAME 'libmurmur_udf.so'"
+
+#service mysql restart
 
 end_seconds=`date +%s`
 echo -----------------------------
