@@ -105,10 +105,10 @@ pear_channels=(
   pear.phpunit.de
 	pear.netpirates.net
 	pear.symfony.com
+	pear.phpdoc.org
 )
  
 pear_packages=(
-  phpdocumentor
   PHP_CodeSniffer
   phpunit/PHP_CodeCoverage
   phpunit/PHPUnit
@@ -118,6 +118,11 @@ pear_packages=(
   phpunit/phpcpd
   phpunit/phpdcd-0.9.3
   phpunit/phploc
+  phpdoc/phpDocumentor
+	phpdoc/phpDocumentor_Template_checkstyle
+	phpdoc/phpDocumentor_Template_new_black
+	phpdoc/phpDocumentor_Template_responsive
+	phpdoc/
 )
 
 npm_packages=(
@@ -137,6 +142,8 @@ npm_packages=(
   grunt-shell
 )
 
+
+export DEBIAN_FRONTEND=noninteractive
 
 sudo rm /etc/apt/sources.list.d/grml.list
 if [ -f /srv/config/sources.list ]; then
@@ -209,13 +216,13 @@ headinfo "Discover PEAR channels"
 pear config-set auto_discover 1
 for chan in "${pear_channels[@]}"
 do
-  pear channel-discover $chan
+  pear -q channel-discover $chan
 done
  
 headinfo "Install/upgrade PEAR packages"
 for pearpkg in "${pear_packages[@]}"
 do
-  pear install -a $pearpkg
+  pear -q install -a $pearpkg
 done
 
 
@@ -245,7 +252,7 @@ if [ npm --version ]; then
 	npm update
 else
 	headinfo "Installing Node.js"
-	wget -O /tmp/node-v0.10.21-linux-x86.tar.gz http://nodejs.org/dist/v0.10.21/node-v0.10.21-linux-x86.tar.gz
+	wget -q -O /tmp/node-v0.10.21-linux-x86.tar.gz http://nodejs.org/dist/v0.10.21/node-v0.10.21-linux-x86.tar.gz
 	tar xzvf /tmp/node-v0.10.21-linux-x86.tar.gz --strip-components=1 -C /usr/local
 	npm update
 	headinfo "Installing Node.js packages"
