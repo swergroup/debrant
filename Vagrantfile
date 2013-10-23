@@ -16,7 +16,6 @@ Vagrant.configure("2") do |config|
   # box containing the Unbuntu 12.0.4 Precise 32 bit release. Once this box is downloaded
   # to your host computer, it is cached for future use under the specified box name.
   config.vm.box = "wheezy32"
-  config.vm.box_url = "~/src/wheezy32.box"
   config.vm.box_url = "http://tools.swergroup.com/downloads/wheezy32.box"
 
   config.vm.hostname = "debrant"
