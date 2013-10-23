@@ -52,8 +52,12 @@ apt_package_check_list=(
 	gnu-standards
 	kexec-tools
 	links
+	libaio1
+	libdbi-perl
+	libnet-daemon-perl
 	libmemcache0
 	libmemcached10
+	libmysqlclient18=5.5.33-rel31.1-568.wheezy
 	localepurge
 	lynx
 	mcrypt
@@ -63,9 +67,11 @@ apt_package_check_list=(
 	ntp
 	ntpdate
 	percona-toolkit
+	percona-server-server
 	php-pear
 	php5-cli
 	php5-common
+	php5-curl
 	php5-dev
 	php5-ffmpeg
 	php5-fpm
@@ -81,6 +87,7 @@ apt_package_check_list=(
 	php5-xdebug
 	php5-xmlrpc
 	pound
+	rsync
 	screen
 	stress
 	unar
@@ -101,9 +108,9 @@ pear_channels=(
 )
  
 pear_packages=(
-  PHPDoc-0.1.0
+  phpdocumentor
+  PHP_CodeSniffer
   phpunit/PHP_CodeCoverage
-  phpunit/PHP_CodeSniffer
   phpunit/PHPUnit
   phpunit/PHPUnit_Selenium
   phpunit/PHPUnit_MockObject
@@ -131,6 +138,7 @@ npm_packages=(
 )
 
 
+sudo rm /etc/apt/sources.list.d/grml.list
 if [ -f /srv/config/sources.list ]; then
 	headinfo "Add new APT main sources"
 	unlink /etc/apt/sources.list
@@ -193,7 +201,7 @@ then
 	scrutinizer self-update
 else
 	headinfo "Installing Scrutinizer"
-	wget -O /usr/local/bin/scrutinizer https://scrutinizer-ci.com/scrutinizer.phar
+	wget -q -O /usr/local/bin/scrutinizer https://scrutinizer-ci.com/scrutinizer.phar
 	chmod +x /usr/local/bin/scrutinizer
 fi
 
@@ -209,7 +217,7 @@ for pearpkg in "${pear_packages[@]}"
 do
   pear install -a $pearpkg
 done
- 
+
 
 if [ ! -d /srv/www/wp-cli ]
 then
@@ -232,21 +240,21 @@ else
 fi
 
 
-if [ ! npm --version ]; then
-	headinfo "Node.js install"
+if [ npm --version ]; then
+	headinfo "Node.js already installed"
+	npm update
+else
+	headinfo "Installing Node.js"
 	wget -O /tmp/node-v0.10.21-linux-x86.tar.gz http://nodejs.org/dist/v0.10.21/node-v0.10.21-linux-x86.tar.gz
 	tar xzvf /tmp/node-v0.10.21-linux-x86.tar.gz --strip-components=1 -C /usr/local
 	npm update
-else
-	headinfo "Node.js already installed"
-	npm update
+	headinfo "Installing Node.js packages"
+	for npm in "${npm_packages[@]}"
+	do
+	  npm install -g $npm
+	done
 fi
 	
-headinfo "Installing Node.js packages"
-for npm in "${npm_packages[@]}"
-do
-  npm install -g $npm
-done
 
 
 # cleaning
