@@ -1,6 +1,7 @@
 # Debrant 
 
-Debian-based web development Vagrant based on [10up/varying-vagrant-vagrants](https://github.com/10up/varying-vagrant-vagrants).
+[Debian](https://debian.org)-based web development [Vagrant](http://vagrantup.com), built on top of [10up/varying-vagrant-vagrants](https://github.com/10up/varying-vagrant-vagrants).
+
 
 ## Features
 
@@ -15,7 +16,7 @@ Debian-based web development Vagrant based on [10up/varying-vagrant-vagrants](ht
 * [wp-cli](wp-cli.org) -- command-line tools for managing WordPress installations.
 * Pound
 * Vagrant
-* [Z shell (w/GRML config)](http://grml.org/zsh/)
+* [Z shell (w/ GRML.org setup)](http://grml.org/zsh/)
 
 ## Usage
 
