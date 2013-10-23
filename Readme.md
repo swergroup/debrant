@@ -2,6 +2,7 @@
 
 [Debian](https://debian.org)-based web development [Vagrant](http://vagrantup.com), built on top of [10up/varying-vagrant-vagrants](https://github.com/10up/varying-vagrant-vagrants).
 
+Our custom Vagrant box is a 190MB Debian Wheezy 32 bit installed via [grml-debootstrap](http://grml.org/grml-debootstrap/), with networking, VirtualBox additions and the basic tools. Everything else will be insalled via the custom provision bash scripts, which can be modified or replaced as needed.
 
 ## Features
 
@@ -18,8 +19,17 @@
 * Vagrant
 * [Z shell (w/ GRML.org setup)](http://grml.org/zsh/)
 
-## Usage
+## Mapped files/folders
 
-* ...
+* `config/sources.list` -- it replaces the main `/etc/apt/sources.list` file
+* `config/custom-sources.list` -- optional `/etc/apt/sources.list.d/custom-sources.list` file
+* `provision/provision-pre.sh` -- optional pre-default provision script (runs before, every time)
+* `provision/provision-custom.sh` -- if present, replace the default provision script (and runs every time :-)
+* `provision/provision.sh` -- default provision script (runs every time, unless custom is present)
+* `provision/provision-post.sh` -- optional post-default provision script (runs before, every time)
+
+* `config` -- shared configuration folder
+* `database` -- database folders and scripts
+* `www` -- website folders
 
 ## Code Credits & Inspirations
