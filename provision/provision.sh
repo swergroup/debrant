@@ -28,23 +28,22 @@ warn="${bldylw} ! ${txtrst}"
 dead="${bldred}!!!${txtrst}"
 
 function headinfo {
-	echo -e "${txtrst}"
-	echo -e "\n${bldblu}###${txtrst} ${bldwht}$1${txtrst}\n"
-	echo -e "${txtrst}"
+	echo -e ""
+	echo -e "${txtrst}${bldblu}###${txtrst} ${bldwht}$1${txtrst}"
 }
 
-echo -e "${bldylw}
+echo -e "
+${bldwht}
 ______     _                     _   
 |  _  \   | |                   | |  
 | | | |___| |__  _ __ __ _ _ __ | |_ 
 | | | / _ \ '_ \| '__/ _\` | '_ \| __|
 | |/ /  __/ |_) | | | (_| | | | | |_ 
 |___/ \___|_.__/|_|  \__,_|_| |_|\__|
-                                     
 ${txtrst}
-Debrant - Debian Vagrant
-Version ${txtgrn} 0.1.1 ${txtrst} (2013/10/23)
+Debian-based Vagrant v.${txtgrn} 0.1.1${txtrst}
 https://github.com/swergroup/debrant
+
 "
 
 # running time measure
@@ -54,7 +53,9 @@ ping_result=`ping -c 2 8.8.8.8 2>&1`
 
 # Debian package checklist
 apt_package_check_list=(
+	build-essential
 	byobu
+  checkinstall
 	colordiff
 	curl
 	debian-keyring
@@ -79,7 +80,7 @@ apt_package_check_list=(
 	libnet-daemon-perl
 	libmemcache0
 	libmemcached10
-	libmysqlclient18=5.5.33-rel31.1-569.wheezy
+#	libmysqlclient18=5.5.33-rel31.1-569.wheezy
 	localepurge
 	lynx
 	mcrypt
@@ -88,10 +89,13 @@ apt_package_check_list=(
 	nginx-extras
 	ntp
 	ntpdate
+	optipng
+	percona-playback
 	percona-toolkit
 	percona-server-client-5.5
 	percona-server-common-5.5
 	percona-server-server-5.5
+	percona-xtrabackup
 	php-apc
 	php-pear
 	php5-cli
@@ -111,6 +115,7 @@ apt_package_check_list=(
 	php5-sqlite
 	php5-xdebug
 	php5-xmlrpc
+	php5-xsl
 	pound
 	rsync
 	screen
@@ -121,7 +126,7 @@ apt_package_check_list=(
 	varnish
 	vim
 	wget
-	xtrabackup
+	yui-compressor
 	zsh
 )
 
@@ -144,8 +149,6 @@ pear_packages=(
   phpunit/phpdcd-0.9.3
   phpunit/phploc
   phpdoc/phpDocumentor
-	phpdoc/phpDocumentor_Template_checkstyle
-	phpdoc/phpDocumentor_Template_new_black
 	phpdoc/phpDocumentor_Template_responsive
 )
 
@@ -214,9 +217,9 @@ done
 # Debian packages
 if [ ${#apt_package_install_list[@]} = 0 ];
 then 
-	echo -e "${pass} Everything is already installed"
+	headinfo "Skip APT install"
 else
-	headinfo "APT init/install"
+	headinfo "APT install"
 	aptitude purge ~c
 	apt-get update --assume-yes
 	apt-get install --force-yes --assume-yes ${apt_package_install_list[@]}
@@ -232,6 +235,7 @@ else
 	curl -sS https://getcomposer.org/installer | php
 	chmod +x composer.phar
 	mv composer.phar /usr/local/bin/composer
+	composer --version
 fi
 
 if which scrutinizer;
@@ -242,7 +246,7 @@ else
 	headinfo "Installing Scrutinizer"
 	wget -q -O /usr/local/bin/scrutinizer https://scrutinizer-ci.com/scrutinizer.phar
 	chmod +x /usr/local/bin/scrutinizer
-	scrutinizer -v
+	scrutinizer --version
 fi
 
 headinfo "Discover PEAR channels"
@@ -359,6 +363,12 @@ rm -f /var/cache/apt/archives/*.deb
 apt-get update
 apt-get upgrade
 
+headinfo "Your Debrant is ready!"
+nginx -v
+php -v
+mysql --version
+wp --version
+
 end_seconds=`date +%s`
-echo -----------------------------
+echo     ----------------------------------------------
 echo -e "${pass} Provisioning complete in `expr $end_seconds - $start_seconds` seconds\n"
