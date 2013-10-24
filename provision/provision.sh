@@ -42,8 +42,7 @@ ______     _                     _
 |___/ \___|_.__/|_|  \__,_|_| |_|\__|
 ${txtrst}
 Debian-based Vagrant ${txtgrn}0.1.1${txtrst}
-https://github.com/swergroup/debrant
-
+${txtund}https://github.com/swergroup/debrant${txtreset}
 "
 
 # running time measure
@@ -375,14 +374,7 @@ apt-get autoremove
 rm -f /var/cache/apt/archives/*.deb
 
 headinfo "Your ${txtred}Debrant${txtreset}${bldwht} is ready, enjoy!"
-echo -e "${txtrst}"
-vn=`nginx -v`
-echo -e "${pass} ${vn}"
-vp=`php -v`
-echo -e "${pass} ${vp}"
-vm=`mysql --version`
-echo -e "${pass} ${vm}"
-vw=`wp --version`
-echo -e "${pass} ${vw}"
 end_seconds=`date +%s`
-echo -e "${pass} Provisioning complete in `expr $end_seconds - $start_seconds` seconds\n"
+echo -e "\n${txtwht}Documentation and issue tracking:"
+echo -e "${txtund}https://github.com/swergroup/debrant${txtreset}"
+echo -e "\n${txtwht}Provisioning complete in `expr $end_seconds - $start_seconds` seconds\n"
