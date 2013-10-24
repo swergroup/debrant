@@ -342,6 +342,14 @@ if [ ! -f /etc/mysql/my.cnf ]; then
 	mysql -u root -e "CREATE FUNCTION murmur_hash RETURNS INTEGER SONAME 'libmurmur_udf.so'"
 fi
 
+headinfo "Nginx configuration"
+if [ ! -f /etc/nginx/nginx-wp-common.conf ]; then
+  cp /etc/nginx/nginx.conf /etc/nginx/nginx.conf-default
+  ln -sf /srv/config/nginx/nginx.conf /etc/nginx/nginx.conf
+  ln -sf /srv/config/nginx/nginx-wp-common.conf /etc/nginx/nginx-wp-common.conf
+  ln -sf /srv/config/nginx/sites /etc/nginx/custom-sites
+fi
+
 # WP #1: theme test setup
 if [ ! -d /srv/www/theme-test ]
 then
@@ -354,7 +362,7 @@ then
 	wp core config --dbname=wp_themetest --dbuser=root --dbpass='' --quiet --extra-php <<PHP
 define( "WP_DEBUG", true );
 PHP
-	wp core install --url=debrant.themetest.dev --quiet --title="Theme Test Drive" --admin_name=admin --admin_email="admin@themetest.debrant.dev" --admin_password="password"
+	wp core install --url=themetest.debrant.dev --quiet --title="Theme Test Drive" --admin_name=admin --admin_email="admin@themetest.debrant.dev" --admin_password="password"
   wp theme-test install --plugin=all
   ln -s /srv/shared/plugins /srv/www/theme-test/wp-content/plugins/_shared
   ln -s /srv/shared/themes /srv/www/theme-test/wp-content/themes/_shared
@@ -372,6 +380,8 @@ headinfo "Final housekeeping"
 apt-get autoclean
 apt-get autoremove
 rm -f /var/cache/apt/archives/*.deb
+service mysql restart
+service nginx restart
 
 headinfo "Your ${txtred}Debrant${txtreset}${bldwht} is ready, enjoy!"
 end_seconds=`date +%s`
