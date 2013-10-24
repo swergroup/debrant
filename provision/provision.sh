@@ -33,7 +33,7 @@ function headinfo {
 }
 
 echo -e "
-${bldwht}
+${bldred}
 ______     _                     _   
 |  _  \   | |                   | |  
 | | | |___| |__  _ __ __ _ _ __ | |_ 
@@ -83,12 +83,14 @@ apt_package_check_list=(
 #	libmysqlclient18=5.5.33-rel31.1-569.wheezy
 	localepurge
 	lynx
+  mailutils
 	mcrypt
 	memcached
 	mlocate
 	nginx-extras
 	ntp
 	ntpdate
+  nullmailer
 	optipng
 	percona-playback
 	percona-toolkit
@@ -255,12 +257,14 @@ for chan in "${pear_channels[@]}"
 do
   pear -q channel-discover $chan
 done
+pear -q update-channels
  
 headinfo "Install/upgrade PEAR packages"
 for pearpkg in "${pear_packages[@]}"
 do
 	echo -e "${list} $pearpkg $(pear -q install -a $pearpkg 2>&1 > /dev/null)"
 done
+pear -q upgrade-all
 
 
 if [ ! -d /srv/www/wp-cli ]
@@ -342,17 +346,26 @@ fi
 # WP #1: theme test setup
 if [ ! -d /srv/www/theme-test ]
 then
-	headinfo "Installing WordPress #1: theme test setup"
+	headinfo "Installing WordPress theme test setup"
+  echo "create database if not exists wp_themetest" | mysql -u root
 	mkdir /srv/www/theme-test
 	chown www-data:www-data /srv/www/theme-test
 	cd /srv/www/theme-test
-	wp core download
-	wp core config --dbname=wordpress_themetest --dbuser=root --dbpass='' --quiet --extra-php <<PHP
+	wp core download --locale=it_IT
+	wp core config --dbname=wp_themetest --dbuser=root --dbpass='' --quiet --extra-php <<PHP
 define( "WP_DEBUG", true );
 PHP
-	wp core install --url=debrant.themetest.dev --quiet --title="Theme Test" --admin_name=admin --admin_email="admin@debrant.themetest.dev" --admin_password="password"
+	wp core install --url=debrant.themetest.dev --quiet --title="Theme Test Drive" --admin_name=admin --admin_email="admin@themetest.debrant.dev" --admin_password="password"
+  wp theme-test install --plugin=all
+  ln -s /srv/shared/plugins /srv/www/theme-test/wp-content/plugins/_shared
+  ln -s /srv/shared/themes /srv/www/theme-test/wp-content/themes/_shared
 else
-	headinfo "Skip WordPress #1 installation, already available"
+	headinfo "Update WordPress theme test setup"
+	cd /srv/www/theme-test
+  wp core update
+  wp core update-db
+  wp plugin update --all
+  wp theme update --all
 fi
 
 # cleaning
@@ -360,10 +373,8 @@ headinfo "Final housekeeping"
 apt-get autoclean
 apt-get autoremove
 rm -f /var/cache/apt/archives/*.deb
-apt-get update
-apt-get upgrade
 
-headinfo "Your Debrant is ready!"
+headinfo "Your ${txtred}Debrant${txtreset}${bldwht} is ready!"
 nginx -v
 php -v
 mysql --version
