@@ -7,5 +7,6 @@ database/data
 test.sh
 wheezy32.box
 wheezy32.ova
+www/network
 www/theme-test
 www/wp-cli

@@ -121,6 +121,7 @@ apt_package_check_list=(
 	php5-xmlrpc
 	php5-xsl
 	pound
+  re2c
 	rsync
 	screen
 	stress
@@ -312,11 +313,17 @@ else
 	done
 fi
 	
-# headinfo "Compiling and installing Redis"
+# headinfo "Installing Redis"
+# echo -e "${list} Download (2.6.16)"
 # wget -q -O /tmp/redis-2.6.16.tar.gz http://download.redis.io/releases/redis-2.6.16.tar.gz
 # tar xzf /tmp/redis-2.6.16.tar.gz /tmp/redis-2.6.16
 # cd /tmp/redis-2.6.16
+# echo -e "${list} Build"
 # make
+# echo -e "${list} Install"
+# checkinstall -D --install=yes -y --pkgname='Redis' --pkgversion='2.6.16' --pkgrelease='2.6.16' \
+#  --pakdir=/root --mantainer='admin@vagrant.dev' --nodoc --gzman=yes --reset-uids=yes \
+#  --deldoc=yes --deldesc=yes --delspec=yes --bk make install
 
 # services
 headinfo "Percona Server (MySQL) Configuration"
@@ -399,23 +406,33 @@ service php5-fpm restart
 headinfo "WordPress setup #1: Theme test drive"
 if [ ! -d /srv/www/theme-test ]
 then
-  echo -e "${list} WordPress setup"
+  echo -e "${list} Download & install WordPress"
 	mkdir /srv/www/theme-test
 	chown www-data:www-data /srv/www/theme-test
 	cd /srv/www/theme-test
 	wp core download --locale=it_IT
 	wp core config --dbname=wp_themetest --dbuser=wp --dbpass=wp --quiet --extra-php <<PHP
-define( "WP_DEBUG", true );
+define( 'WP_DEBUG', true );
+if ( WP_DEBUG ) {
+    define( 'WP_DEBUG_LOG', true );
+    define( 'WP_DEBUG_DISPLAY', false );
+    @ini_set( 'display_errors', 0 );
+}
 PHP
 	wp core install --url=themetest.debrant.dev --quiet --title="Theme Test Drive" --admin_user=admin --admin_email="admin@themetest.debrant.dev" --admin_password="password"
-  echo -e "${list} Theme test data & plugin setup"
+  echo -e "${list} Theme test data & plugin"
   wp theme-test install --plugin=all
+
+  echo -e "${list} Default plugin bundle"
+  wp plugin install mp6 --activate
+  wp plugin install pods
+  wp plugin install uploadplus
   
-  echo -e "${list} Shared plugins & themes folders setup"
+  echo -e "${list} Shared plugins & themes folders"
   ln -s /srv/shared/plugins /srv/www/theme-test/wp-content/plugins/_shared
   ln -s /srv/shared/themes /srv/www/theme-test/wp-content/themes/_shared
 
-  echo -e "${list} Memcached object cache setup"
+  echo -e "${list} Memcached object cache"
   dlurl='http://plugins.svn.wordpress.org/memcached/tags/2.0.2/object-cache.php'
   wget -q -O /srv/www/theme-test/wp-content/object-cache.php $dlurl
 else
@@ -438,9 +455,20 @@ then
   echo -e "${list} WordPress setup"
 	wp core download --locale=it_IT
 	wp core config --dbname=wp_network --dbuser=wp --dbpass=wp --quiet --extra-php <<PHP
-define( "WP_DEBUG", true );
+define( 'WP_DEBUG', true );
+if ( WP_DEBUG ) {
+    define( 'WP_DEBUG_LOG', true );
+    define( 'WP_DEBUG_DISPLAY', false );
+    @ini_set( 'display_errors', 0 );
+}
 PHP
 	wp core multisite-install --url=network.debrant.dev --quiet --title="Debrant Network" --admin_user=admin --admin_email="admin@network.debrant.dev" --admin_password="password"
+
+  echo -e "${list} Default plugin bundle"
+  wp plugin install mp6
+  wp plugin activate mp6 --network
+  wp plugin install pods
+  wp theme-test install --data=skip --plugin=all --option=skip
   
   echo -e "${list} Shared plugins & themes folders setup"
   ln -s /srv/shared/plugins /srv/www/network/wp-content/plugins/_shared
@@ -469,15 +497,15 @@ ______     _                     _
 
 BRANDING
 
-headinfo "Your ${txtred}Debrant${txtreset}${bldwht} is ready, enjoy!"
+headinfo "Your ${txtred}Debrant${txtreset}${bldwht} is ready!"
+
+echo -e "${txtwht}Please add these to your /etc/hosts file:${txtreset}\n"
+echo -e "192.168.100.11   debrant.dev${txtreset}"
+echo -e "192.168.100.11   themetest.debrant.dev${txtreset}"
+echo -e "192.168.100.11   network.debrant.dev${txtreset}"
+
+echo -e "\n${txtwht}Code repository and issue tracking:"
+echo -e "${txtund}https://github.com/swergroup/debrant${txtreset}\n"
+
 end_seconds=`date +%s`
-echo -e "${txtwht}Documentation and issue tracking:"
-echo -e "${txtund}https://github.com/swergroup/debrant${txtreset}"
-
-echo -e "${txtwht}Please add this to your /etc/hosts file:"
-echo -e "${txtund}192.168.13.37   debrant.dev${txtreset}"
-echo -e "${txtund}192.168.13.37   themetest.debrant.dev${txtreset}"
-echo -e "${txtund}192.168.13.37   network.debrant.dev${txtreset}"
-
-
 echo -e "\n${txtwht}Provisioning complete in `expr $end_seconds - $start_seconds` seconds\n"
