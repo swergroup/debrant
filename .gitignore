@@ -1,6 +1,9 @@
 .vagrant
+_trashbin
 build.sh
 config/sources.list
+database/backups
+database/data
 test.sh
 wheezy32.box
 wheezy32.ova
