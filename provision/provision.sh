@@ -313,17 +313,27 @@ else
 	done
 fi
 	
-# headinfo "Installing Redis"
-# echo -e "${list} Download (2.6.16)"
+
+# headinfo "Redis build and setup"
+# echo -e "${list} Downloading source code (2.6.16)"
 # wget -q -O /tmp/redis-2.6.16.tar.gz http://download.redis.io/releases/redis-2.6.16.tar.gz
 # tar xzf /tmp/redis-2.6.16.tar.gz /tmp/redis-2.6.16
 # cd /tmp/redis-2.6.16
-# echo -e "${list} Build"
+# echo -e "${list} Compiling source code"
 # make
-# echo -e "${list} Install"
+# echo -e "${list} Build Debian package and install"
+
+# # TODO: something like http://www.saltwebsites.com/2012/install-redis-245-service-centos-6 ?
 # checkinstall -D --install=yes -y --pkgname='Redis' --pkgversion='2.6.16' --pkgrelease='2.6.16' \
 #  --pakdir=/root --mantainer='admin@vagrant.dev' --nodoc --gzman=yes --reset-uids=yes \
 #  --deldoc=yes --deldesc=yes --delspec=yes --bk make install
+# # redis check
+# cd /opt
+# echo -e "${list} WordPress Redis object cache setup"
+# git clone git@github.com:swergroup/wordpress-redis-backend.git
+# cd wordpress-redis-backend
+# git submodule init
+# git submodule update
 
 # services
 headinfo "Percona Server (MySQL) Configuration"
@@ -435,6 +445,10 @@ PHP
   echo -e "${list} Memcached object cache"
   dlurl='http://plugins.svn.wordpress.org/memcached/tags/2.0.2/object-cache.php'
   wget -q -O /srv/www/theme-test/wp-content/object-cache.php $dlurl
+  
+  # echo -e "${list} Redis object cache"
+  # ln -s /opt/wordpress-redis-backend/predis /srv/www/theme-test/wp-content/predis
+  # ln -s /opt/wordpress-redis-backend/object-cache.php /srv/www/theme-test/wp-content/object-cache.php
 else
   echo -e "${list} WordPress update"
 	cd /srv/www/theme-test
@@ -477,6 +491,10 @@ PHP
   echo -e "${list} Memcached object cache setup"
   dlurl='http://plugins.svn.wordpress.org/memcached/tags/2.0.2/object-cache.php'
   wget -q -O /srv/www/network/wp-content/object-cache.php $dlurl
+
+  # echo -e "${list} Redis object cache"
+  # ln -s /opt/wordpress-redis-backend/predis /srv/www/theme-test/wp-content/predis
+  # ln -s /opt/wordpress-redis-backend/object-cache.php /srv/www/theme-test/wp-content/object-cache.php  
 else
   echo -e "${list} WordPress update"
 	cd /srv/www/network
