@@ -1,5 +1,7 @@
-deb http://ftp.it.debian.org/debian wheezy main contrib non-free
-deb http://security.debian.org/ wheezy/updates main
-deb http://repo.percona.com/apt wheezy main
-deb http://repo.varnish-cache.org/debian/ wheezy varnish-3.0
-deb http://deb.grml.org/ grml-stable main
+deb http://ftp.it.debian.org/debian squeeze main contrib non-free
+deb http://security.debian.org/ squeeze/updates main
+deb http://repo.percona.com/apt squeeze main
+deb http://repo.varnish-cache.org/debian/ squeeze varnish-3.0
+deb http://ftp.heanet.ie/mirrors/debian-multimedia/ squeeze main
+deb http://packages.dotdeb.org squeeze all
+deb http://packages.dotdeb.org squeeze-php54 all

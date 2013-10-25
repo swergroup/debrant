@@ -27,14 +27,13 @@ txtrst='\e[0m'          # Text reset
 txtdim='\e[2m'
  
 echo -e "${bldred}
-______     _                     _   
-|  _  \   | |                   | |  
-| | | |___| |__  _ __ __ _ _ __ | |_ 
-| | | / _ \ '_ \| '__/ _\` | '_ \| __|
-| |/ /  __/ |_) | | | (_| | | | | |_ 
-|___/ \___|_.__/|_|  \__,_|_| |_|\__|
+ ___       __        ______  
+|_ _|___ __\ \      / /  _ \ 
+ | |/ __/ _ \ \ /\ / /| |_) |
+ | | (_|  __/\ V  V / |  __/ 
+|___\___\___| \_/\_/  |_|    
 ${txtrst}
-Debian-based Vagrant - version ${txtgrn}$debrant_version${txtrst}
+WordPress + Icecast (Debrant ${txtgrn}$debrant_version${txtrst})
 ${txtund}https://github.com/swergroup/debrant${txtreset}
 "
 
@@ -56,51 +55,44 @@ function headinfo {
 # Debian package checklist
 apt_package_check_list=(
 	build-essential
-	byobu
   checkinstall
-	colordiff
 	curl
 	debian-keyring
 	deborphan
-	dos2unix
+  faad
+  flac
+  ffmpeg
 	findutils
-	ffmpeg
 	gettext
-	geoip-bin
-	geoip-database
 	git
 	git-svn
 	gnupg2
 	gnupg-curl
 	gnu-standards
-	graphviz
+  icecast2
 	imagemagick
 	kexec-tools
-	links
-	libaio1
-	libdbi-perl
-	libnet-daemon-perl
+  libdbd-mysql-perl
 	libmemcache0
-	libmemcached10
-	libmysqlclient18=5.5.34-rel32.0-591.wheezy
+	libmemcached5
+  libmemcached-tools
+  libmysqlclient18=5.5.33-rel31.1-568.squeeze
+  liquidsoap
+	links
 	localepurge
 	lynx
   mailutils
+  memcached
 	mcrypt
-	memcached
 	mlocate
-	nginx-extras
+  nginx
 	ntp
 	ntpdate
-  nullmailer
-	optipng
-	percona-playback
-	percona-toolkit
-	percona-server-client-5.5
-	percona-server-common-5.5
-	percona-server-server-5.5
-	percona-xtrabackup
-	php-apc
+  percona-toolkit
+  percona-server-client-5.5
+  percona-server-common-5.5
+  percona-server-server-5.5
+  percona-xtrabackup
 	php-pear
 	php5-cli
 	php5-common
@@ -120,48 +112,15 @@ apt_package_check_list=(
 	php5-xdebug
 	php5-xmlrpc
 	php5-xsl
-	pound
-  re2c
 	rsync
 	screen
-	stress
-	unar
+  subversion
 	unrar
 	unzip
-	varnish
 	vim
 	wget
-	yui-compressor
 	zsh
 )
-
-pear_channels=(
-	components.ez.no
-  pear.phpunit.de
-	pear.netpirates.net
-	pear.symfony.com
-	pear.phpdoc.org
-)
- 
-pear_packages=(
-  PHP_CodeSniffer
-  phpunit/PHP_CodeCoverage
-  phpunit/PHPUnit
-  phpunit/PHPUnit_Selenium
-  phpunit/PHPUnit_MockObject
-  phpunit/phpcov
-  phpunit/phpcpd
-  phpunit/phpdcd-0.9.3
-  phpunit/phploc
-  phpdoc/phpDocumentor
-	phpdoc/phpDocumentor_Template_responsive
-)
-
-npm_packages=(
-  grunt-cli
-  phantomjs
-)
-
 
 export DEBIAN_FRONTEND=noninteractive
 
@@ -174,6 +133,10 @@ if [ -f /srv/config/sources.list ]; then
   echo -e "${list} GPG keys setup"
 	# percona server (mysql)
 	apt-key adv --keyserver keys.gnupg.net --recv-keys 1C4CBDCDCD2EFD2A	2>&1 > /dev/null
+  # debmulti
+  apt-key adv --keyserver keys.gnupg.net --recv-keys 1F41B907	2>&1 > /dev/null
+  # dotdeb
+  apt-key adv --keyserver keys.gnupg.net --recv-keys E9C74FEEA2098A6E	2>&1 > /dev/null
 	# varnish
 	wget -qO- http://repo.varnish-cache.org/debian/GPG-key.txt | apt-key add -
 
@@ -214,7 +177,7 @@ then
   echo -e "${pass} Nothing to do!"
 else
   echo -e "${list} Installing packages.."
-	aptitude purge ~c
+	aptitude purge -y ~c
 	apt-get update --assume-yes
 	apt-get install --force-yes --assume-yes ${apt_package_install_list[@]}
 	apt-get clean
@@ -233,41 +196,6 @@ else
 fi
 echo -e "${pass} Composer check"
 composer --version
-
-
-headinfo "Scrutinizer setup"
-if which scrutinizer &>/dev/null;
-then
-	echo -e "${list} Updating.."
-	scrutinizer self-update
-else
-	echo -e "${list} Installing.."
-	wget -q -O /usr/local/bin/scrutinizer https://scrutinizer-ci.com/scrutinizer.phar
-	chmod +x /usr/local/bin/scrutinizer
-fi
-echo -e "${pass} Scrutinizer check"
-scrutinizer --version
-
-
-headinfo "PHP PEAR setup"
-pear config-set auto_discover 1
-echo -e "${list} PEAR channel-discover"
-for chan in "${pear_channels[@]}"
-do
-  pear -q channel-discover $chan
-done
-echo -e "${list} PEAR update-channels"
-pear -q update-channels
- 
-for pearpkg in "${pear_packages[@]}"
-do
-	echo -e "${list} PEAR install $pearpkg $(pear -q install -a $pearpkg 2>&1 > /dev/null)"
-done
-echo -e "${list} PEAR upgrade-all"
-pear -q upgrade-all
-echo -e "${pass} PEAR check"
-pear -V
-
 
 headinfo "wp-cli setup"
 if [ ! -d /srv/www/wp-cli ]
@@ -296,116 +224,13 @@ echo -e "${pass} wp-cli check"
 wp --info
 
 
-headinfo "Node.js setup"
-if npm --version | grep -q '1.3.11'; then
-  echo -e "${list} Node.js npm update"
-	npm update
-else
-  echo -e "${list} Installing binaries.."
-	wget -q -O /tmp/node-v0.10.21-linux-x86.tar.gz http://nodejs.org/dist/v0.10.21/node-v0.10.21-linux-x86.tar.gz
-	tar xzf /tmp/node-v0.10.21-linux-x86.tar.gz --strip-components=1 -C /usr/local
-	npm update
-  echo -e "${list} Installing npm packages.."
-	for npm in "${npm_packages[@]}"
-	do
-		echo -e "  ${list} $npm"
-	  npm install -g $npm &>/dev/null
-	done
-fi
-	
-
-# headinfo "Redis build and setup"
-# echo -e "${list} Downloading source code (2.6.16)"
-# wget -q -O /tmp/redis-2.6.16.tar.gz http://download.redis.io/releases/redis-2.6.16.tar.gz
-# tar xzf /tmp/redis-2.6.16.tar.gz /tmp/redis-2.6.16
-# cd /tmp/redis-2.6.16
-# echo -e "${list} Compiling source code"
-# make
-# echo -e "${list} Build Debian package and install"
-
-# # TODO: something like http://www.saltwebsites.com/2012/install-redis-245-service-centos-6 ?
-# checkinstall -D --install=yes -y --pkgname='Redis' --pkgversion='2.6.16' --pkgrelease='2.6.16' \
-#  --pakdir=/root --mantainer='admin@vagrant.dev' --nodoc --gzman=yes --reset-uids=yes \
-#  --deldoc=yes --deldesc=yes --delspec=yes --bk make install
-# # redis check
-# cd /opt
-# echo -e "${list} WordPress Redis object cache setup"
-# git clone git@github.com:swergroup/wordpress-redis-backend.git
-# cd wordpress-redis-backend
-# git submodule init
-# git submodule update
-
-# services
-headinfo "Percona Server (MySQL) Configuration"
-if [ ! -f /etc/mysql/my.cnf ]; then
-#	mv /etc/mysql/my.cnf /etc/mysql/my.cnf-backup
-  echo -e "${list} my.cnf setup"
-	ln -s /srv/config/my.cnf /etc/mysql/my.cnf
-	echo -e "${list} Restart service"
-	service mysql restart
-	mysql -u root -e "CREATE FUNCTION fnv1a_64 RETURNS INTEGER SONAME 'libfnv1a_udf.so'"
-	mysql -u root -e "CREATE FUNCTION fnv_64 RETURNS INTEGER SONAME 'libfnv_udf.so'"
-	mysql -u root -e "CREATE FUNCTION murmur_hash RETURNS INTEGER SONAME 'libmurmur_udf.so'"
-fi
-if [ -f /srv/database/init-custom.sql ]
-then
-  # Create the databases (unique to system) that will be imported with
-  # the mysqldump files located in database/backups/
-  echo -e "${list} Custom MySQL setup..."
-	mysql -u root < /srv/database/init-custom.sql
-else
-  # Setup MySQL by importing an init file that creates necessary
-  # users and databases that our vagrant setup relies on.
-  echo -e "${list} Default MySQL setup.."
-  mysql -u root < /srv/database/init.sql
-fi
-# Process each mysqldump SQL file in database/backups to import 
-# an initial data set for MySQL.
-/srv/database/import-sql.sh
-
-headinfo "Nginx configuration"
-if [ ! -f /etc/nginx/nginx-wp-common.conf ]; then
-  cp /etc/nginx/nginx.conf /etc/nginx/nginx.conf-default
-	echo -e "${list} /etc/nginx/nginx.conf"
-  ln -sf /srv/config/nginx/nginx.conf /etc/nginx/nginx.conf
-	echo -e "${list} /etc/nginx/nginx-wp-common.conf"
-  ln -sf /srv/config/nginx/nginx-wp-common.conf /etc/nginx/nginx-wp-common.conf
-	echo -e "${list} /etc/nginx/custom-sites"
-  ln -sf /srv/config/nginx/sites /etc/nginx/custom-sites
-fi
-if [ ! -e /etc/nginx/server.key ]; then
-  echo -e "${list} Generate Nginx server private key..."
-  vvvgenrsa=`openssl genrsa -out /etc/nginx/server.key 2048 2>&1`
-  echo $vvvgenrsa
-fi
-if [ ! -e /etc/nginx/server.csr ]; then
-  echo -e "${list} Generate Certificate Signing Request (CSR)..."
-  openssl req -new -batch -key /etc/nginx/server.key -out /etc/nginx/server.csr
-fi
-if [ ! -e /etc/nginx/server.crt ]; then
-  echo -e "${list} Sign the certificate using the above private key and CSR..."
-  vvvsigncert=`openssl x509 -req -days 365 -in /etc/nginx/server.csr -signkey /etc/nginx/server.key -out /etc/nginx/server.crt 2>&1`
-  echo $vvvsigncert
-fi
-
-headinfo "PHP5 configuration"
-echo -e "${list} Disable xdebug"
-php5dismod xdebug
-echo -e "${list} pool.d/www.conf"
-ln -sf /srv/config/php5/www.conf /etc/php5/fpm/pool.d/www.conf
-echo -e "${list} conf.d/php-custom.ini"
-ln -sf /srv/config/php5/php-custom.ini /etc/php5/fpm/conf.d/php-custom.ini
-echo -e "${list} conf.d/xdebug.ini"
-ln -sf /srv/config/php5/xdebug.ini /etc/php5/fpm/conf.d/xdebug.ini
-echo -e "${list} conf.d/apc.ini"
-ln -sf /srv/config/php5/apc.ini /etc/php5/fpm/conf.d/apc.ini
-
 # cleaning
 headinfo "Housekeeping and service restart"
 echo -e "${list} APT cache cleaning"
-apt-get autoclean
-apt-get autoremove
+apt-get -y autoclean
+apt-get -y autoremove
 rm -f /var/cache/apt/archives/*.deb
+aptitude purge -y ~c
 echo -e "${list} Restarting services.."
 service memcached restart
 service mysql restart
@@ -413,15 +238,15 @@ service nginx restart
 service php5-fpm restart
 
 # WP #1: theme test setup
-headinfo "WordPress setup #1: Theme test drive"
-if [ ! -d /srv/www/theme-test ]
+headinfo "WordPress setup"
+if [ ! -d /srv/www/icewp ]
 then
   echo -e "${list} Download & install WordPress"
-	mkdir /srv/www/theme-test
-	chown www-data:www-data /srv/www/theme-test
-	cd /srv/www/theme-test
+	mkdir /srv/www/icewp
+	chown www-data:www-data /srv/www/icewp
+	cd /srv/www/icewp
 	wp core download --locale=it_IT
-	wp core config --dbname=wp_themetest --dbuser=wp --dbpass=wp --quiet --extra-php <<PHP
+	wp core config --dbname=wp_icewp --dbuser=wp --dbpass=wp --quiet --extra-php <<PHP
 define( 'WP_DEBUG', true );
 if ( WP_DEBUG ) {
     define( 'WP_DEBUG_LOG', true );
@@ -429,7 +254,9 @@ if ( WP_DEBUG ) {
     @ini_set( 'display_errors', 0 );
 }
 PHP
-	wp core install --url=themetest.debrant.dev --quiet --title="Theme Test Drive" --admin_user=admin --admin_email="admin@themetest.debrant.dev" --admin_password="password"
+	wp core install --url=icewp.debrant.dev --quiet --title="IceWP Test" --admin_user=admin --admin_email="admin@icewp.debrant.dev" --admin_password="password"
+  wp option update permalink_structure "/%postname%/"
+  
   echo -e "${list} Theme test data & plugin"
   wp theme-test install --plugin=all
 
@@ -437,90 +264,42 @@ PHP
   wp plugin install mp6 --activate
   wp plugin install pods
   wp plugin install uploadplus
+  wp plugin install s2member --activate
   
   echo -e "${list} Shared plugins & themes folders"
-  ln -s /srv/shared/plugins /srv/www/theme-test/wp-content/plugins/_shared
-  ln -s /srv/shared/themes /srv/www/theme-test/wp-content/themes/_shared
+  ln -s /srv/shared/plugins /srv/www/icewp/wp-content/plugins/_shared
+  ln -s /srv/shared/themes /srv/www/icewp/wp-content/themes/_shared
 
   echo -e "${list} Memcached object cache"
   dlurl='http://plugins.svn.wordpress.org/memcached/tags/2.0.2/object-cache.php'
-  wget -q -O /srv/www/theme-test/wp-content/object-cache.php $dlurl
+  wget -q -O /srv/www/icewp/wp-content/object-cache.php $dlurl
   
   # echo -e "${list} Redis object cache"
-  # ln -s /opt/wordpress-redis-backend/predis /srv/www/theme-test/wp-content/predis
-  # ln -s /opt/wordpress-redis-backend/object-cache.php /srv/www/theme-test/wp-content/object-cache.php
+  # ln -s /opt/wordpress-redis-backend/predis /srv/www/icewp/wp-content/predis
+  # ln -s /opt/wordpress-redis-backend/object-cache.php /srv/www/icewp/wp-content/object-cache.php
 else
   echo -e "${list} WordPress update"
-	cd /srv/www/theme-test
+	cd /srv/www/icewp
   wp core update
   wp core update-db
   wp plugin update --all
   wp theme update --all
 fi
-
-
-# WP #2: network setup
-headinfo "WordPress setup #2: Network"
-if [ ! -d /srv/www/network ]
-then
-	mkdir /srv/www/network
-	chown www-data:www-data /srv/www/network
-	cd /srv/www/network
-  echo -e "${list} WordPress setup"
-	wp core download --locale=it_IT
-	wp core config --dbname=wp_network --dbuser=wp --dbpass=wp --quiet --extra-php <<PHP
-define( 'WP_DEBUG', true );
-if ( WP_DEBUG ) {
-    define( 'WP_DEBUG_LOG', true );
-    define( 'WP_DEBUG_DISPLAY', false );
-    @ini_set( 'display_errors', 0 );
-}
-PHP
-	wp core multisite-install --url=network.debrant.dev --quiet --title="Debrant Network" --admin_user=admin --admin_email="admin@network.debrant.dev" --admin_password="password"
-
-  echo -e "${list} Default plugin bundle"
-  wp plugin install mp6
-  wp plugin activate mp6 --network
-  wp plugin install pods
-  wp theme-test install --data=skip --plugin=all --option=skip
-  
-  echo -e "${list} Shared plugins & themes folders setup"
-  ln -s /srv/shared/plugins /srv/www/network/wp-content/plugins/_shared
-  ln -s /srv/shared/themes /srv/www/network/wp-content/themes/_shared
-
-  echo -e "${list} Memcached object cache setup"
-  dlurl='http://plugins.svn.wordpress.org/memcached/tags/2.0.2/object-cache.php'
-  wget -q -O /srv/www/network/wp-content/object-cache.php $dlurl
-
-  # echo -e "${list} Redis object cache"
-  # ln -s /opt/wordpress-redis-backend/predis /srv/www/theme-test/wp-content/predis
-  # ln -s /opt/wordpress-redis-backend/object-cache.php /srv/www/theme-test/wp-content/object-cache.php  
-else
-  echo -e "${list} WordPress update"
-	cd /srv/www/network
-  wp core update
-  wp core update-db
-  wp plugin update --all
-  wp theme update --all
-fi
-
 
 cat <<BRANDING > /etc/motd
-______     _                     _   
-|  _  \   | |                   | |  
-| | | |___| |__  _ __ __ _ _ __ | |_ 
-| | | / _ \ '_ \| '__/ _\` | '_ \| __|
-| |/ /  __/ |_) | | | (_| | | | | |_ 
-|___/ \___|_.__/|_|  \__,_|_| |_|\__|
-
+ ___       __        ______  
+|_ _|___ __\ \      / /  _ \ 
+ | |/ __/ _ \ \ /\ / /| |_) |
+ | | (_|  __/\ V  V / |  __/ 
+|___\___\___| \_/\_/  |_|    
+                             
 BRANDING
 
-headinfo "Your ${txtred}Debrant${txtreset}${bldwht} is ready!"
+headinfo "Your ${txtred}IceWP Debrant${txtreset}${bldwht} is ready!"
 
 echo -e "${txtwht}Please add these to your /etc/hosts file:${txtreset}\n"
-echo -e "192.168.100.11   debrant.dev${txtreset}"
-echo -e "192.168.100.11   themetest.debrant.dev${txtreset}"
-echo -e "192.168.100.11   network.debrant.dev${txtreset}"
+echo -e "192.168.99.99   debrant.dev${txtreset}"
+echo -e "192.168.99.99   icewp.debrant.dev${txtreset}"
 
 echo -e "\n${txtwht}Code repository and issue tracking:"
 echo -e "${txtund}https://github.com/swergroup/debrant${txtreset}\n"
